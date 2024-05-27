@@ -1,31 +1,34 @@
-import React, { createContext, useState,useContext } from "react";
-import all_products from '../Components/Assets/Assets/all_product'
-import CartItems from "../Components/CartItems/CartItems";
-import {UserContext} from './userContext'
-import { useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
+import all_products from '../Components/Assets/Assets/all_product';
 import axios from "axios";
+import { UserContext } from './userContext';
 
-export const ShopContext = createContext(null)
+export const ShopContext = createContext(null);
 
-const getDefaultCart = () =>{
-    let cart = {}
+const getDefaultCart = () => {
+    let cart = {};
     for (let index = 0; index < all_products.length; index++) {
-        
         cart[all_products[index].id] = 0;
-        
     }
-    return cart
-
-}
+    return cart;
+};
 
 const ShopContextProvider = (props) => {
     const { user } = useContext(UserContext);
-     const [cartItems,setCartItems] = useState(getDefaultCart())
-     useEffect(() => {
+
+    // Initialize cartItems from localStorage or getDefaultCart
+    const initializeCart = () => {
+        const localCart = localStorage.getItem("shoppingCart");
+        return localCart ? JSON.parse(localCart) : getDefaultCart();
+    };
+
+    const [cartItems, setCartItems] = useState(initializeCart);
+
+    useEffect(() => {
         const fetchCart = async () => {
             if (user) {
                 try {
-                    const { data } = await axios.get('/api/cart', { params: { userId: user._id },withCredentials: true });
+                    const { data } = await axios.get('/api/cart', { params: { userId: user._id }, withCredentials: true });
                     setCartItems(data);
                 } catch (error) {
                     console.error('Error fetching cart:', error);
@@ -38,7 +41,7 @@ const ShopContextProvider = (props) => {
     const saveCart = async (cart) => {
         if (user) {
             try {
-                await axios.post('/api/cart', { userId: user._id, cart },{ withCredentials: true });
+                await axios.post('/api/cart', { userId: user._id, cart }, { withCredentials: true });
             } catch (error) {
                 console.error('Error saving cart:', error);
             }
@@ -61,47 +64,38 @@ const ShopContextProvider = (props) => {
         });
     };
 
-
-    const getTotalCartAmount = () =>{
+    const getTotalCartAmount = () => {
         let totalAmount = 0;
-        for (const item in cartItems)
-        {
-            if(cartItems[item]>0)
-            {
-                let itemInfo= all_products.find((product)=>product.id === Number(item))
-                
-                 totalAmount += itemInfo.new_price*cartItems[item]
+        for (const item in cartItems) {
+            if (cartItems[item] > 0) {
+                let itemInfo = all_products.find((product) => product.id === Number(item));
+                totalAmount += itemInfo.new_price * cartItems[item];
             }
-            
         }
-        
-        console.log(totalAmount)
+        console.log(totalAmount);
         return totalAmount;
-        
-    }
+    };
 
-
-    const  getTotalCartItems = () =>{
+    const getTotalCartItems = () => {
         let totalItems = 0;
-        for(const item in cartItems)
-        {
-            if(cartItems[item]>0){
-                totalItems += cartItems[item]
+        for (const item in cartItems) {
+            if (cartItems[item] > 0) {
+                totalItems += cartItems[item];
             }
         }
-        return totalItems
+        return totalItems;
+    };
 
-    }
+    useEffect(() => {
+        localStorage.setItem("shoppingCart", JSON.stringify(cartItems));
+    }, [cartItems]);
 
-   const contextValue = {all_products,cartItems,addToCart,removeFromCart,getTotalCartAmount,getTotalCartItems}
-    return(
-        <ShopContext.Provider value={contextValue} >
-
+    const contextValue = { all_products, cartItems, addToCart, removeFromCart, getTotalCartAmount, getTotalCartItems };
+    return (
+        <ShopContext.Provider value={contextValue}>
             {props.children}
-
         </ShopContext.Provider>
-    )
-     
-}
+    );
+};
 
 export default ShopContextProvider;
