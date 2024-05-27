@@ -9,7 +9,7 @@ import { UserContext } from '../../Context/userContext'; // Import the UserConte
 export const Navbar = () => {
     const [menu, setMenu] = useState("shop");
     const { getTotalCartItems } = useContext(ShopContext);
-    const { user,logout,login } = useContext(UserContext); // Use the UserContext
+    const { user,logout } = useContext(UserContext); // Use the UserContext
 
     return (
         <div className='navbar'>
